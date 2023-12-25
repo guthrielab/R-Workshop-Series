@@ -1,0 +1,27 @@
+---
+title: |
+  <center>Installation Guide for R and RStudio</center>
+author: |
+  <center>Jennifer Guthrie and Idowu Olawoye</center>
+date: |
+  <center>`r format(Sys.time(), '%B %d, %Y')`</center>
+output: 
+  html_document:
+    toc: false
+---
+
+<br><br>
+
+## Installing R<br>
+
+1. **Download R:** Go to the R Project website (<https://www.r-project.org/>) and select a CRAN mirror.<br>
+2. **Choose Your Operating System:** Select the appropriate version of R for your operating system.<br>
+3. **Install R:** Follow the installation instructions provided for your operating system.<br>
+
+## Installing RStudio<br>
+
+1. **Download RStudio:** Visit the RStudio download page: <https://www.rstudio.com/products/rstudio/download/>.<br>
+2. **Select Your Version:** Choose the appropriate version of RStudio for your operating system.<br>
+3. **Install RStudio:** Follow the installation instructions provided for your operating system.<br><br>
+
+Once both R and RStudio are installed, launch RStudio and you're ready to start using R for your data analysis and programming tasks!
