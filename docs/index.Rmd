@@ -26,4 +26,6 @@ output:
 
 Once both R and RStudio are installed, launch RStudio and you're ready to start using R for your data analysis and programming tasks!
 
-## [Week One](Week_One-Intro_to_R.nb.html)
+## [Week One](Week_One-Intro_to_R.nb.html) 
+
+-   [Download R Markdown](Week_One-Intro_to_R.Rmd "download")
