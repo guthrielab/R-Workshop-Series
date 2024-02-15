@@ -29,3 +29,8 @@ Once both R and RStudio are installed, launch RStudio and you're ready to start 
 ## [Week One](Week_One-Intro_to_R.nb.html) 
 
 -   [Download R Markdown](Week_One-Intro_to_R.Rmd "download")
+
+
+## [Week Three](Week_Three-Intro_to_ggplot_ggtree.html)
+
+-   [Download R Markdown](Week_Three-Intro_to_ggplot_ggtree.Rmd "download")
