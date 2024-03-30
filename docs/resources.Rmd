@@ -1,0 +1,36 @@
+---
+title: "Resources"
+author: "Jennifer Guthrie and Idowu Olawoye"
+output: html_document
+date: "2024-03-30"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Some useful RStudio information
+
+1.  [RStudio IDE :: Cheatsheet](https://rstudio.github.io/cheatsheets/html/rstudio-ide.html)
+2.  [RStudio for Beginners](https://education.rstudio.com/learn/beginner/)
+3.  [Datacamp - RStudio](https://www.datacamp.com/tutorial/r-studio-tutorial)
+4.  [James Cook University](https://www.jcu.edu.au/__data/assets/pdf_file/0004/1188310/R-Studio-Basics.pdf)
+
+## A few blogs and resources to help you with processing data in RStudio
+
+1.  [Data import with the tidyverse :: Cheatsheet](https://rstudio.github.io/cheatsheets/html/data-import.html)
+2.  [Data tidying with tidyr :: Cheatsheet](https://rstudio.github.io/cheatsheets/html/tidyr.html)
+3.  [Data transformation with dplyr :: Cheatsheet](https://rstudio.github.io/cheatsheets/html/data-transformation.html)
+4.  [Dates and times with lubridate :: Cheatsheet](https://rstudio.github.io/cheatsheets/html/lubridate.html)
+5.  [Data Wrangling with R](https://cengel.github.io/R-data-wrangling/)
+6.  [Data Science in R: A Gentle Introduction](https://bookdown.org/jgscott/DSGI/)
+
+# Some ggplot2 resources and blogs to get you started
+
+1.  [Plot cheat sheet](https://github.com/rstudio/cheatsheets/blob/main/data-visualization.pdf)
+2.  [ggplot2 primer tutorial by Gashim and Boily](https://www.data-action-lab.com/wp-content/uploads/2018/11/DSRS_GGP2.pdf)
+3.  [Data visualization by Procogia](https://procogia.com/data-visualization-in-r-a-ggplot2-primer/)
+4.  [Data visualization with ggplot2 :: Cheat Sheet](https://rstudio.github.io/cheatsheets/html/data-visualization.html)
+5.  [Colour Picker](https://htmlcolorcodes.com/color-picker/)
+6.  [Colour Blindness safe colours](https://cran.r-project.org/web/packages/colorBlindness/vignettes/colorBlindness.html)
+7.  [Free vector editing tool](https://inkscape.org/)

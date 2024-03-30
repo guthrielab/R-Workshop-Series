@@ -35,3 +35,6 @@ Once both R and RStudio are installed, launch RStudio and you're ready to start 
 ## [Week Four](WorkshopSeries_Statistics_2024-03-21.html)
 
 ## [Week Four-b](WorkshopSeries_Markdown_Example_2024-03-21.html)
+
+
+## [Resource Page](resources.html)
