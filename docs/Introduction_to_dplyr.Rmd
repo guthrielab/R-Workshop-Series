@@ -1,0 +1,486 @@
+---
+title: "Introduction to dplyr"
+author: "Jennifer Guthrie and Idowu Olawoye"
+output: html_document
+date: "2024-03-30"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+<br> <br>
+
+## Importing Data
+
+#### Load the necessary packages
+
+```{r packages, echo=TRUE, warning=FALSE, message=FALSE}
+
+library(here)
+library(readxl)
+library(openxlsx)
+
+```
+
+#### Importing
+
+```{r, echo=TRUE, warning=FALSE, message=FALSE}
+# Import dataset that is saved in the project folder > 2_Input
+phd.df <- read.csv(here("2_Input", "PhDPublications_ed.csv"))
+
+# Import dataset that is saved in the project folder > 2_Input
+phd.xlsx.df <- read_xlsx(here("2_Input", "PhDPublications_ed.xlsx"))
+
+# Import dataset that is saved in the project folder > 2_Input
+phd.tab.df <- read.delim(here("2_Input", "PhDPublications_ed.txt"))
+
+```
+
+#### Manually import the dataset into the Environment
+
+```{r, echo=TRUE, warning=FALSE, message=FALSE}
+# Have a look at the field names between coded import and manual import. See any differences?
+
+names(phd.df)
+names(phd.xlsx.df)
+names(phd.tab.df)
+
+
+# Now what if your data file has other information above the actual data
+# Import dataset that is saved in the project folder > 2_Input
+phd.hdr.xlsx.df <- read_xlsx(here("2_Input", "PhDPublications_ed_header.xlsx"))
+
+# Have a look at the first few lines, what do you notice?
+head(phd.hdr.xlsx.df)
+
+
+# You can specify in your import that you want to skip some rows, in this case the first 3 rows
+phd.hdr.xlsx.df <- read_xlsx(here("2_Input", "PhDPublications_ed_header.xlsx"), skip = 3)
+
+# Have a look at the first few lines, what do you notice?
+head(phd.hdr.xlsx.df)
+```
+
+#### Missing Data
+
+```{r, echo=TRUE, warning=FALSE, message=FALSE}
+# Importance of specifying how "missing" data was coded
+# For example missing data might be coded with a symbol like an X or dash (-) or could be blank or state NA
+phd.df.msng <- read_xlsx(here("2_Input", "PhDPublications_ed_MissingData.xlsx"))
+
+# Inspect the characteristics of this imported data.
+# Do any of the variables have NAs?
+summary(phd.df.msng)
+
+
+# Import the dataset in again but specify how missing data was coded
+phd.df.msng <- read_xlsx(here("2_Input", "PhDPublications_ed_MissingData.xlsx"), na= c("X", "NA", "N/A", "blank"))
+
+# Load the dplyr package
+library(dplyr)
+
+# Check for missing values in each variable
+missing_summary <- phd.df.msng %>%
+                    summarise_all(~sum(is.na(.)))
+
+# Print summary of missing values
+print(missing_summary)
+
+```
+
+#### Specifying dates
+
+```{r, echo=TRUE, warning=FALSE, message=FALSE}
+# Assign a date to the variable dts
+dts <- "2024-12-25"
+
+# Examine structure of dts and note that it is currently a character format
+str(dts)
+
+# To extract a component of the date would require you to treat it as a character string
+# Extract the month
+dts.month <- substr(dts, 6, 7)
+
+# Print the month
+print(dts.month)
+
+# Check the classification of this variable
+# If you wanted to calculate the number of months between this and another variable could you?
+class(dts.month)
+
+# Convert month to numeric if needed
+dts.month <- as.numeric(dts.month)
+
+# check the classification now
+class(dts.month)
+
+# Print the month
+print(dts.month)
+
+
+# Instead you of treating the dts variable as a character string you could convert it to a date
+# Convert to a date
+dts <- as.Date(dts)
+
+# wanted to extract the month you can use the command format()
+dts.month <- as.integer(format(dts, "%m"))
+
+```
+
+##### Alternatively you can use the lubridate package which makes working with dates and times easier
+
+```{r, echo=TRUE, warning=FALSE, message=FALSE}
+# Install the lubridate package
+
+# install.packages("lubridate")
+
+# Load the lubridate package
+
+library(lubridate)
+
+# Assign a date to the variable dts
+
+dts <- "2022-01-01"
+
+# Extract the month
+
+dts.month <- month(dts)
+
+# Print the year
+
+print(dts.month)
+
+# What if your date is not in ISO 8601 date format??
+
+# Create a non-standard date
+
+dts.nonStd <- "January 1, 2020"
+
+# Try to convert the string to a date format and extract the month from this non-standard date
+
+# \*Note that as you get more comfortable in R you can start to combine commands as was done here
+
+month(as.Date(dts.nonStd, "%B %d, %Y"))
+
+# In this case we need to specify the order
+
+# Parse the string into a date object
+
+dts.nonStd <- mdy(dts.nonStd)
+
+# Print the newly formatted date
+
+print(dts.nonStd)
+
+# Extract the month
+
+dts.nonStd.month <- month(dts.nonStd)
+
+# Print the month
+
+print(dts.nonStd.month)
+
+# What if I want to display the month name instead of the number
+
+# Extract the month with full name by setting label = TRUE and if you want the abbreviated month set abbr = TRUE
+
+dts.month.name <- month(dts.nonStd, label = TRUE, abbr = FALSE)
+
+# Print the month name
+
+print(dts.month.name)
+
+#### Exporting data
+
+# Export the dataframe to the output folder as a .csv
+
+write.csv(phd.hdr.xlsx.df, file = here("3_Output", "phd_data_output.csv"), row.names = FALSE)
+
+# Export the dataframe to the output folder as an Excl file
+
+write.xlsx(phd.hdr.xlsx.df, file = here("3_Output", "phd_data_output.xlsx"))
+```
+
+## Data Cleaning
+
+Overview
+
+In this lesson, we will introduce the dplyr package in R, which is a powerful tool for data manipulation. We will cover the basic functions of dplyr, including filtering, selecting, arranging, summarizing, and mutating data frames.
+
+```{r, echo=TRUE, warning=FALSE, message=FALSE}
+## Load necessary packages into the R session
+
+# install.packages("here")
+# install.packages("readxl")
+# install.packages("dplyr")
+
+library(here)
+library(readxl)
+library(dplyr)
+
+```
+
+#### Import two ICU datasets related to the same patients
+
+```{r, echo=TRUE, warning=FALSE, message=FALSE}
+icu.med.df <-  read.csv(here("2_Input", "ICU_MedRecords.csv"))
+
+icu.dem.df <-  read.csv(here("2_Input", "ICU_Demographics.csv"))
+
+
+
+
+## The dataset consists of the following variables
+
+# **pt_id**
+# Patient ID, numeric
+# 
+# **age**
+# Patient age, a numeric vector
+# 
+# **sex**
+# Patient sex, a factor with levels Female Male
+# 
+# **died**
+# Died before discharge?, a factor with levels No Yes
+# 
+# **service**
+# Service at ICU Admission, a factor with levels Medical Surgical
+# 
+# **cancer**
+# Cancer part of present problem?, a factor with levels No Yes
+# 
+# **renal**
+# History of chronic renal failure?, a factor with levels No Yes
+# 
+# **infect**
+# Infection probable at ICU admission?, a factor with levels No Yes
+# 
+# **cpr**
+# Patient received CPR prior to ICU admission?, a factor with levels No Yes
+# 
+# **systolic**
+# Systolic blood pressure at admission (mm Hg), a numeric vector
+# 
+# **hrtrate**
+# Heart rate at ICU Admission (beats/min), a numeric vector
+# 
+# **previcu**
+# Previous admission to an ICU within 6 Months?, a factor with levels No Yes
+# 
+# **admit**
+# Type of admission, a factor with levels Elective Emergency
+# 
+# **fracture**
+# Admission with a long bone, multiple, neck, single area, or hip fracture? a factor with levels No Yes
+# 
+# **po2**
+# PO2 from initial blood gases, a factor with levels >60 <=60
+# 
+# **ph**
+# pH from initial blood gases, a factor with levels >=7.25 <7.25
+# 
+# **pco**
+# PCO2 from initial blood gases, a factor with levels <=45 >45
+# 
+# **bic**
+# Bicarbonate (HCO3) level from initial blood gases, a factor with levels >=18 <18
+# 
+# **creatin**
+# Creatinine, from initial blood gases, a factor with levels <=2 >2
+# 
+# **coma**
+# Level of unconsciousness at admission to ICU, a factor with levels None Stupor Coma
+```
+
+#### Linking datasets
+
+R dataframe objects can be joined together with the dplyr function There are multiple types of joins, example left join. See the following for an explaination:
+
+<https://lindsaydbrin.github.io/CREATE_R_Workshop/Lesson_-_dplyr_join.html>
+
+```{r, echo=TRUE, warning=FALSE, message=FALSE}
+# Let's join the two datasets, linking them by the patient ID which is both datasets
+
+icu.all <- icu.med.df %>% left_join(., icu.dem.df, by = "pt_id")
+```
+
+#### Summarizing
+
+The summarize function is used to create summary statistics for specific variables. This function can also be a quick way to check your dataset to identify any errors or issues
+
+```{r, echo=TRUE, warning=FALSE, message=FALSE}
+icu.all %>% group_by(sex) %>% summarise(n = n())
+```
+
+#### Data Cleaning
+
+It is rare to recieve a completely clean dataset that is ready for analysis
+
+```{r, echo=TRUE, warning=FALSE, message=FALSE}
+icu.all.clean <- icu.all %>% mutate(sex.cl = ifelse(is.na(sex), "U", ifelse(sex == "F", "Female", ifelse(sex == "M", "Male", ifelse(sex == "T", "Other", "Unknown")))))
+
+# Confirm that the cleanup worked
+
+icu.all.clean %>% group_by(sex.cl) %>% summarise(n = n())
+
+## Data Manipulation
+
+# Sometimes you want to create a new variable out of other existing data, i.e. derive a variable
+
+# Summarise the age variable
+
+icu.all.clean %>% summarise(mn = mean(age), md = median(age), min.age = min(age), max.age = max(age))
+
+# Create an age group variable using age
+
+icu.all.clean <- icu.all.clean %>% mutate(age.grp = ifelse(age < 25, "<25", ifelse(age >= 25 & age < 65, "25-64", ifelse(age >= 65, "65+", NA))))
+
+# Confirm that the age grouping were done correctly
+
+icu.all.clean %>% group_by(age.grp) %>% summarise(min = min(age), max = max(age))
+
+#---- Data Selection ---- \# You can create a dataset containing only selected variables
+
+# Confirm that the cleanup worked
+
+icu.ages <- icu.all.clean %>% select(age, age.grp)
+
+## Create a sub-set or filtered dataset
+
+# You can create a dataset containing only selected variables
+
+# Filter to create a subset that only contains the Age Group 25-64
+
+icu.ages.sub <- icu.all.clean %>% filter(age.grp == "25-64")
+```
+
+#### Summarise data
+
+```{r, echo=TRUE, warning=FALSE, message=FALSE}
+
+# Group by age and calculate the frequency and relative frequency of deaths
+
+icu.all.clean %>% group_by(age.grp, died) %>% summarise(n = n()) %>% mutate(rel.freq = round(100*(n/sum(n))),1)
+
+# Group by **deaths** and calculate the frequency and relative frequency of age groups
+
+icu.all.clean %>% group_by(died, age.grp) %>% summarise(n = n()) %>% mutate(rel.freq = round(100*(n/sum(n))),1)
+
+# calculate the median and interquartile range
+
+icu.all.clean %>% group_by(sex.cl) %>% summarise(n = n(), median_age = median(age), Q1 = round(quantile(age, 0.25)), Q3 = round(quantile(age, 0.75)))
+```
+
+#### Arrange - Variables can be sorted, the default is descending
+
+```{r, echo=TRUE, warning=FALSE, message=FALSE}
+# Add on the arrange function to sort a variable
+
+icu.all.clean %>% group_by(died, age.grp) %>% summarise(n = n()) %>% mutate(rel.freq = round(100*(n/sum(n))), 1) %>% filter(died == "Yes") %>% arrange(rel.freq)
+
+# Add on the arrange function to sort a variable, descending
+
+icu.all.clean %>% group_by(died, age.grp) %>% summarise(n = n()) %>% mutate(rel.freq = round(100*(n/sum(n))), 1) %>% filter(died == "Yes") %>% arrange(desc(rel.freq))
+
+## Spend some time exploring the dataset and using the commands you have just learned
+```
+
+#### Linking datasets
+
+R dataframe objects can be joined together with the dplyr function There are multiple types of joins, example left join. See the following for an explaination: <https://lindsaydbrin.github.io/CREATE_R_Workshop/Lesson_-_dplyr_join.html>
+
+```{r, echo=TRUE, warning=FALSE, message=FALSE}
+# Let's join the two datasets, linking them by the patient ID which is both datasets
+
+icu.all <- icu.med.df %>% left_join(., icu.dem.df, by = "pt_id")
+```
+
+#### Summarizing
+
+The summarize function is used to create summary statistics for specific variables. This function can also be a quick way to check your dataset to identify any errors or issues
+
+```{r, echo=TRUE, warning=FALSE, message=FALSE}
+icu.all %>% group_by(sex) %>% summarise(n = n())
+```
+
+#### Data Cleaning
+
+It is rare to recieve a completely clean dataset that is ready for analysis
+
+```{r, echo=TRUE, warning=FALSE, message=FALSE}
+icu.all.clean <- icu.all %>% mutate(sex.cl = ifelse(is.na(sex), "U", ifelse(sex == "F", "Female", ifelse(sex == "M", "Male", ifelse(sex == "T", "Other", "Unknown")))))
+
+# Confirm that the cleanup worked
+
+icu.all.clean %>% group_by(sex.cl) %>% summarise(n = n())
+```
+
+#### Data Manipulation
+
+Sometimes you want to create a new variable out of other existing data, i.e. derive a variable
+
+```{r, echo=TRUE, warning=FALSE, message=FALSE}
+# Summarise the age variable
+
+icu.all.clean %>% summarise(mn = mean(age), md = median(age), min.age = min(age), max.age = max(age))
+
+# Create an age group variable using age
+
+icu.all.clean <- icu.all.clean %>% mutate(age.grp = ifelse(age < 25, "<25", ifelse(age >= 25 & age < 65, "25-64", ifelse(age >= 65, "65+", NA))))
+
+# Confirm that the age grouping were done correctly
+
+icu.all.clean %>% group_by(age.grp) %>% summarise(min = min(age), max = max(age))
+```
+
+#### Data Selection
+
+You can create a dataset containing only selected variables
+
+```{r, echo=TRUE, warning=FALSE, message=FALSE}
+# Confirm that the cleanup worked
+
+icu.ages <- icu.all.clean %>% select(age, age.grp)
+
+## Create a sub-set or filtered dataset
+
+# You can create a dataset containing only selected variables
+
+# Filter to create a subset that only contains the Age Group 25-64
+
+icu.ages.sub <- icu.all.clean %>% filter(age.grp == "25-64")
+```
+
+#### Summarise data
+
+```{r, echo=TRUE, warning=FALSE, message=FALSE}
+# Group by age and calculate the frequency and relative frequency of deaths
+
+icu.all.clean %>% group_by(age.grp, died) %>% summarise(n = n()) %>% mutate(rel.freq = round(100*(n/sum(n))),1)
+
+# Group by **deaths** and calculate the frequency and relative frequency of age groups
+
+icu.all.clean %>% group_by(died, age.grp) %>% summarise(n = n()) %>% mutate(rel.freq = round(100*(n/sum(n))),1)
+
+# calculate the median and interquartile range
+
+icu.all.clean %>% group_by(sex.cl) %>% summarise(n = n(), median_age = median(age), Q1 = round(quantile(age, 0.25)), Q3 = round(quantile(age, 0.75)))
+```
+
+#### Arrange
+
+Variables can be sorted, the default is descending
+
+```{r, echo=TRUE, warning=FALSE, message=FALSE}
+# Add on the arrange function to sort a variable
+
+icu.all.clean %>% group_by(died, age.grp) %>% summarise(n = n()) %>% mutate(rel.freq = round(100*(n/sum(n))), 1) %>% filter(died == "Yes") %>% arrange(rel.freq)
+
+# Add on the arrange function to sort a variable, descending
+
+icu.all.clean %>% group_by(died, age.grp) %>% summarise(n = n()) %>% mutate(rel.freq = round(100*(n/sum(n))), 1) %>% filter(died == "Yes") %>% arrange(desc(rel.freq))
+```
+
+#### Spend some time exploring the dataset and using the commands you have just learned

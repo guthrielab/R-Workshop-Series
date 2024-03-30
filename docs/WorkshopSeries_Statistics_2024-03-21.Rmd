@@ -1,0 +1,355 @@
+---
+title: "R Workshop Data Cleaning, Visualization, and Statistics"
+author: "Jennifer Guthrie and Idowu Olawoye"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+<br> <br>
+
+#### Load the necessary packages
+
+```{r packages, echo=TRUE, warning=FALSE, message=FALSE}
+
+#---- Load the necessary packages ----
+
+# install.packages("epiDisplay")
+library(epiDisplay)
+
+# install.packages("dplyr")
+library(dplyr)
+
+#install.packages("ggplot2")
+library(ggplot2)
+
+
+# install.packages("car")  
+library(car)             # Load the car package, which we'll use later to run Levene's test
+
+```
+
+<br>
+
+#### Let's use the outbreak package
+
+```{r data, echo=TRUE}
+
+#---- Load food outbreak that is part of the epiDisplay package ----
+data(Outbreak) 
+
+# To understand the dataset view the information in the Help
+#?Outbreak
+
+# Display a summary of the dataset
+summary(Outbreak)
+
+```
+
+<br> <br>
+
+#### Case Definition
+
+To identify which individuals were considered cases we need a Case Definition In this outbreak a case was defined as a person who had any of the four symptoms: 'nausea', 'vomiting', 'abdpain' or 'diarrhea'
+
+```{r casedef, echo=TRUE}
+
+# Let's create a variable that indicates who is a case and who is not
+Outbreak <- Outbreak %>%
+              mutate(case = ifelse(nausea == 1 |
+                                     vomiting == 1 |
+                                     abdpain == 1 | 
+                                     diarrhea == 1, "Yes",
+                                      "No"))
+```
+
+<br>
+
+#### Case Counts
+
+```{r casecounts, echo=TRUE}
+
+# How many cases were there in the outbreak
+Outbreak %>%
+  group_by(case) %>%
+  summarize(total = n()) %>%
+  mutate(rel.freq = round(100*(total/sum(total)),1))
+
+```
+
+<br>
+
+#### Case Order
+
+```{r order, echo=TRUE}
+
+# Notice that the order is No and then Yes (alphabetical), you can reorder
+Outbreak <- Outbreak %>%
+              mutate(case = factor(case, levels = c("Yes", "No")))
+
+
+# Check that the reorder worked
+Outbreak %>%
+              group_by(case) %>%
+              summarize(total = n()) %>%
+              mutate(rel.freq = round(100*(total/sum(total)),1))
+
+```
+
+<br>
+
+#### Was it the eclairs?
+
+```{r eclair, echo=TRUE}
+
+# Let's say we suspect that it was the eclair that gave people food poisoning
+# Let's summarize the data for that variable
+Outbreak %>%
+  group_by(eclair) %>%
+  summarize(total = n()) %>%
+  mutate(rel.freq = round(100*(total/sum(total)),1))
+
+```
+
+<br>
+
+#### How is the dataset coded?
+
+What do the numbers mean under eclair? Are there people who ate 80 and 90 pieces of eclair!?
+
+```{r eclaircoding, echo=TRUE}
+
+# Perhaps we should summarize the data with the unknown info removed 
+# from the denominator
+Outbreak %>%
+  filter(eclair != 80 & eclair != 90) %>%
+  group_by(eclair) %>%
+  summarize(total = n()) %>%
+  mutate(rel.freq = round(100*(total/sum(total)),1))
+
+```
+
+<br>
+
+#### Categorization
+
+```{r eclaircats, echo=TRUE}
+
+# Maybe we should also create some categories
+Outbreak %>%
+  filter(eclair != 80 & eclair != 90) %>%
+  mutate(eclair.eaten = ifelse(eclair <= 0, "No",
+                          ifelse(eclair > 0, "Yes",NA))) %>%
+  mutate(eclair.eaten = factor(eclair.eaten, levels = c("Yes", "No"))) %>%
+  group_by(eclair.eaten) %>%
+  summarize(total = n()) %>%
+  mutate(rel.freq = round(100*(total/sum(total)),1))
+
+```
+
+<br>
+
+#### Analysis
+
+```{r eclairanalysis, echo=TRUE, message=FALSE}
+
+# How many of the cases ate the eclairs?
+Outbreak %>%
+  filter(eclair != 80 & eclair != 90) %>%
+  mutate(eclair.eaten = ifelse(eclair <= 0, "No",
+                          ifelse(eclair > 0, "Yes", NA))) %>%
+  mutate(eclair.eaten = factor(eclair.eaten, levels = c("Yes", "No"))) %>%
+  group_by(case, eclair.eaten) %>%
+  summarize(total = n())
+
+```
+
+<br>
+
+#### Data Visualization
+
+##### Stacked barplot
+
+```{r eclairviz, echo=TRUE, message=FALSE}
+
+#---- Create a STACKED barplot to visualize the proportions ----
+Outbreak %>%
+  filter(eclair != 80 & eclair != 90) %>%
+  mutate(eclair.eaten = ifelse(eclair <= 0, "No",
+                               ifelse(eclair > 0, "Yes", NA))) %>%
+  mutate(eclair.eaten = factor(eclair.eaten, levels = c("Yes", "No"))) %>%
+  group_by(case, eclair.eaten) %>%
+  summarize(total = n()) %>%
+  mutate(rel.freq = round(100*(total/sum(total)),1)) %>%
+    ggplot(aes(x = case, y = rel.freq, fill = eclair.eaten)) +
+    geom_bar(stat = "identity", position = "stack") +
+    labs(x = "Case", y = "Total", title = "Cases by Eclair Eaten") +
+    scale_fill_manual(values = c("Yes" = "#C934BD", "No" = "#34BDC9"), name = "Eclair Eaten") +
+    theme_minimal()
+
+```
+
+<br>
+
+#### Data Visualization
+
+##### Side-by-Side barplot
+
+```{r eclairviz2, echo=TRUE, message=FALSE}
+
+#---- Create a SIDE-BY-SIDE barplot to visualize the proportions ----
+Outbreak %>%
+  filter(eclair != 80 & eclair != 90) %>%
+  mutate(eclair.eaten = ifelse(eclair <= 0, "No",
+                               ifelse(eclair > 0, "Yes", NA))) %>%
+  mutate(eclair.eaten = factor(eclair.eaten, levels = c("Yes", "No"))) %>%
+  group_by(case, eclair.eaten) %>%
+  summarize(total = n()) %>%
+  mutate(rel.freq = round(100*(total/sum(total)),1)) %>%
+    ggplot(aes(x = case, y = rel.freq, fill = eclair.eaten)) +
+    geom_bar(stat = "identity", position = "dodge") +
+    labs(x = "Case", y = "Percentage (%)", title = "Cases by Eclair Eaten") +
+    scale_fill_manual(values = c("Yes" = "#C934BD", "No" = "#34BDC9"), name = "Eclair Eaten") +
+    theme_minimal()
+    
+```
+
+<br>
+
+#### Statistics
+
+Is there a statistically higher number of people that ate eclairs that got sick?
+
+```{r eclairvar, echo=TRUE, message=FALSE}
+
+# Let's formally create the eclair.eaten variable
+Outbreak.new1 <- Outbreak %>%
+                  filter(eclair != 80 & eclair != 90) %>%
+                  mutate(eclair.eaten = ifelse(eclair <= 0, "No",
+                                        ifelse(eclair > 0, "Yes",NA))) %>%
+                  mutate(eclair.eaten = factor(eclair.eaten, levels = c("Yes", "No")))
+
+
+
+# Next we will make a contingency table
+contingency_table <- table(Outbreak.new1$case, Outbreak.new1$eclair.eaten)
+
+# Perform chi-squared test
+chi_square_test <- chisq.test(contingency_table)
+
+# Print results
+print(chi_square_test)
+
+    
+```
+
+<br>
+
+#### Another example
+
+```{r sexvar, echo=TRUE, message=FALSE}
+
+
+# Summarise the cases by sex
+Outbreak.new1 %>%
+    group_by(sex) %>%
+      summarize(total = n()) %>%
+      mutate(rel.freq = round(100*(total/sum(total)),1))
+
+
+# Go ahead create a new variable (sex.new) to change the coding of the 
+# variable sex (0=F, 1=M) using the mutate function from the dplyr package
+# create a new dataframe and name it Outbreak.new2
+Outbreak.new2 <- Outbreak.new1 %>%
+                  mutate(sex.new = ifelse(sex == 0, "F", "M"))
+
+# Check that you recoded this new field correctly
+Outbreak.new2 %>%
+  group_by(sex, sex.new) %>%
+  summarize(total = n())
+
+```
+
+<br>
+
+#### Visualize
+
+```{r boxplot, echo=TRUE, message=FALSE}
+
+# Generate a boxplot to visualize age by sex
+ggplot(Outbreak.new2, aes(x = sex.new, y = age)) +
+  geom_boxplot() +
+  labs(x = "Sex", y = "Age", title = "Boxplot of Age by Sex") +
+  theme_minimal()
+  
+```
+
+<br>
+
+#### Statistics
+
+```{r agesexstats, echo=TRUE, message=FALSE}
+
+#--- Calculate the mean age of Males and Females
+Outbreak.new2 %>%
+  filter(age != 99) %>%
+  group_by(sex.new) %>%
+  summarize(mn = mean(age),
+            sd = sd(age),
+            md = median(age),
+            Q1 = round(quantile(age, 0.25)), 
+            Q3 = round(quantile(age, 0.75)))
+  
+```
+
+<br>
+
+#### Data Cleaning
+
+```{r agefilter, echo=TRUE, message=FALSE}
+
+# We should create a filtered dataset in which the records with missing age
+# are removed
+Outbreak.new3 <- Outbreak.new2 %>%
+                  filter(age != 99)
+
+```
+
+<br>
+
+#### Statistical Testing
+
+```{r statsign, echo=TRUE, message=FALSE, warning=FALSE}
+
+# Is there a statistically significant difference in age between males and females?
+
+# Step 1: Check Assumptions
+# Shapiro-Wilk test for normality
+# If p ≤ 0.05: You reject the null hypothesis and conclude that the data are not normally distributed.
+shapiro.test(Outbreak.new3$age[Outbreak.new3$sex.new == "M"])
+shapiro.test(Outbreak.new3$age[Outbreak.new3$sex.new == "F"])
+
+# Levene's test for homogeneity of variances
+# p-value (≤ 0.05): Indicates evidence against the null hypothesis, 
+# suggesting that the variances across groups are not equal.
+leveneTest(age ~ sex.new, data = Outbreak.new2)
+
+
+# Step 2: Perform Mann-Whitney U test 
+# Non-parametric test because assumptions weren't met
+mwu_test_result <- wilcox.test(age ~ sex.new, data = Outbreak.new3)
+
+# Step 3: Print the test result
+# p-value (≤ 0.05): Indicates that there is a significant difference 
+# between males and females in their age distributions 
+mwu_test_result
+
+
+# If assumptions had been met the parametric test would be a t-test
+# t_test_result <- t.test(age ~ sex.new, data = Outbreak.new2)
+# t_test_result
+
+```
